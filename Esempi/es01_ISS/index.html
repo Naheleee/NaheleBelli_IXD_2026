@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esempio 01 - ISS</title>
+
+    <style>
+        html{
+            font-family: Arial, Helvetica, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        const API_URL = "http://api.open-notify.org/astros.json"
+        fetch(API_URL)
+            .then(r => r.json())
+            .then(data => {
+                const n = data.number
+                document.body.innerHTML = `<p class"numero_astronauti">${n} Astronauti in orbita:</p><br><br>`
+                data.people.forEach(a => {
+                    document.body.innerHTML += a.name + " 🛰️ " + a.craft + "<br>"
+                })
+            })
+    </script>
+</body>
+
+</html>
