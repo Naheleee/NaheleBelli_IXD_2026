@@ -4,27 +4,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esempio 01 - ISS</title>
+    <title>Esercizio 1 - ISS Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <style>
-        html{
+        html,
+        body {
+            margin: 0;
+            padding: 0;
             font-family: Arial, Helvetica, sans-serif;
+            background-color: #f0f0f0;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            overflow: hidden;
+            transition: background-color 0.5s;
+        }
+
+        .main-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .left-column,
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .box {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(11px);
+            -webkit-backdrop-filter: blur(11px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 0 0px 0px rgba(255, 255, 255, 0);
+            padding: 20px;
+            width: 250px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #texture-box {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .texture-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 35px;
+            width: 100%;
+        }
+
+        .texture-option {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .texture-option label {
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+
+        .texture-option input[type="checkbox"] {
+            transform: scale(1.3);
+            cursor: pointer;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .titolo {
+            font-weight: bold;
+            margin-bottom: 0;
+            display: inline-block;
+        }
+
+        .astronaut-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+        }
+
+        .craft-name {
+            font-weight: bold;
+            color: #000000;
         }
     </style>
 </head>
 
 <body>
+
+    <div id="canvas-container"></div>
+
+    <div class="main-container">
+        <div class="left-column">
+            <div id="astronauts-box" class="box">
+                <div id="lista-astronauti" style="width: 100%;">Caricamento astronauti...</div>
+            </div>
+
+            <div id="texture-box" class="box">
+                <div class="texture-selector">
+                    <span class="titolo">MAPPA</span>
+                    <div class="texture-option">
+                        <input type="checkbox" id="tex1" checked onclick="changeTexture(1)">
+                        <label for="tex1">⚪</label>
+                    </div>
+                    <div class="texture-option">
+                        <input type="checkbox" id="tex2" onclick="changeTexture(2)">
+                        <label for="tex2">🌍</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div id="iss-box" class="box">
+                <span class="titolo" style="margin-bottom: 15px;">🔴 STAZIONE SPAZIALE (ISS)</span>
+                <div id="dati-iss">Caricamento posizione...</div>
+                <br>
+                <div style="text-align: left; width: 100%;">
+                    <strong>Velocità:</strong> ~27,600 km/h<br>
+                    <strong>Altitudine:</strong> ~420 km<br><br>
+                    <strong>Posizione:</strong>
+                    <div id="geo-pos">In orbita...</div>
+                </div>
+            </div>
+
+            <div id="box" class="box">
+                <div>
+                    <div class="texture-option" style="text-align: center; justify-content: center;margin-bottom: 30px;margin-top: 10px;">
+                        <img src="Materiale/InternationalSpaceStation.png" alt="ISS" style="width: 10em;">
+                    </div>
+
+                    <div style="display: flex; gap: 100px;">
+
+                        <div style="flex: 1;">
+                            <strong>Dimensioni:</strong><br>109m x 73m
+                        </div>
+
+                        <div style="flex: 1;">
+                            <strong>Peso:</strong><br>450t
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const API_URL = "http://api.open-notify.org/astros.json"
-        fetch(API_URL)
+        let scene, camera, renderer, controls, earth, issMarker, skybox, clouds, sunLight, ambientLight;
+        let isUserInteracting = false;
+        let isFirstLoad = true;
+        let lastInteractionTime = Date.now();
+        const CAMERA_DISTANCE = 3.5;
+        const LOCK_DELAY = 5000;
+
+        let pathPoints = [];
+        let pathMesh = null;
+        const MAX_POINTS = 500;
+
+        const textureLoader = new THREE.TextureLoader();
+
+        function updateSunPosition() {
+            const now = new Date();
+            const utcHour = now.getUTCHours() + now.getUTCMinutes() / 60;
+            const sunLong = -(utcHour - 12) * 15;
+            const rad = sunLong * (Math.PI / 180);
+            const dist = 50;
+            if (sunLight) {
+                sunLight.position.set(dist * Math.cos(rad), 0, dist * Math.sin(rad));
+            }
+        }
+
+        function changeTexture(choice) {
+            document.getElementById('tex1').checked = (choice === 1);
+            document.getElementById('tex2').checked = (choice === 2);
+
+            if (choice === 2) {
+                sunLight.intensity = 1.5;
+                ambientLight.intensity = 0.3;
+                document.body.style.backgroundColor = "#000";
+                document.body.style.backgroundImage = "none";
+
+                if (!skybox) {
+                    const skyGeo = new THREE.SphereGeometry(500, 64, 64);
+                    const skyMat = new THREE.MeshBasicMaterial({
+                        map: textureLoader.load('Materiale/TextureStelle8k.jpg'),
+                        side: THREE.BackSide
+                    });
+                    skybox = new THREE.Mesh(skyGeo, skyMat);
+                    scene.add(skybox);
+                }
+                skybox.visible = true;
+
+                if (!clouds) {
+                    const cloudGeo = new THREE.SphereGeometry(1.005, 64, 64);
+                    const cloudTex = textureLoader.load('Materiale/TextureNuvole8k.jpg');
+                    const cloudMat = new THREE.MeshStandardMaterial({
+                        alphaMap: cloudTex,
+                        transparent: true,
+                        depthWrite: false,
+                        opacity: 0.8
+                    });
+                    clouds = new THREE.Mesh(cloudGeo, cloudMat);
+                    scene.add(clouds);
+                }
+                clouds.visible = true;
+
+                textureLoader.load('Materiale/TextureTerra10k_Colore_Giorno.jpg', function (tex) {
+                    earth.material.map = tex;
+                    earth.material.needsUpdate = true;
+                });
+            } else {
+                sunLight.intensity = 0;
+                ambientLight.intensity = 1.2;
+                document.body.style.backgroundColor = "#f0f0f0";
+                document.body.style.backgroundImage = "url('Materiale/SfondoBody.jpg')";
+
+                if (skybox) skybox.visible = false;
+                if (clouds) clouds.visible = false;
+
+                textureLoader.load('Materiale/TextureTerra10k_BN.jpg', function (tex) {
+                    earth.material.map = tex;
+                    earth.material.needsUpdate = true;
+                });
+            }
+        }
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 0, CAMERA_DISTANCE);
+
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            sunLight = new THREE.DirectionalLight(0xffffff, 0);
+            scene.add(sunLight);
+            ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+            scene.add(ambientLight);
+
+            const geometry = new THREE.SphereGeometry(1, 64, 64);
+            const material = new THREE.MeshStandardMaterial({
+                map: textureLoader.load('Materiale/TextureTerra10k_BN.jpg'),
+                roughness: 0.8
+            });
+            earth = new THREE.Mesh(geometry, material);
+            scene.add(earth);
+
+            const outlineMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                side: THREE.BackSide
+            }));
+            outlineMesh.scale.multiplyScalar(1.01);
+            earth.add(outlineMesh);
+
+            const issGeometry = new THREE.SphereGeometry(0.03, 13, 13);
+            issMarker = new THREE.Mesh(issGeometry, new THREE.MeshBasicMaterial({
+                color: 0xff0000
+            }));
+            const issOutline = new THREE.Mesh(issGeometry, new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                side: THREE.BackSide
+            }));
+            issOutline.scale.multiplyScalar(1.3);
+            issMarker.add(issOutline);
+            scene.add(issMarker);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.addEventListener('start', () => {
+                isUserInteracting = true;
+            });
+            controls.addEventListener('end', () => {
+                isUserInteracting = false;
+                lastInteractionTime = Date.now();
+            });
+
+            updateSunPosition();
+            animate();
+        }
+
+        function drawPath() {
+            if (pathPoints.length < 2) return;
+            if (pathMesh) scene.remove(pathMesh);
+            const curve = new THREE.CatmullRomCurve3(pathPoints);
+            const points = curve.getPoints(pathPoints.length * 10);
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            pathMesh = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+                color: 0xff0000
+            }));
+            scene.add(pathMesh);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (clouds && clouds.visible) clouds.rotation.y += 0.0001;
+            const currentTime = Date.now();
+            if (!isUserInteracting && (currentTime - lastInteractionTime > LOCK_DELAY) && issMarker) {
+                let targetDirection = new THREE.Vector3().copy(issMarker.position).normalize();
+                camera.position.lerp(targetDirection.multiplyScalar(CAMERA_DISTANCE), 0.005);
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function updateISSPosition(lat, lon) {
+            const radius = 1.15;
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+            const newPos = new THREE.Vector3(
+                -(radius * Math.sin(phi) * Math.cos(theta)),
+                (radius * Math.cos(phi)),
+                (radius * Math.sin(phi) * Math.sin(theta))
+            );
+            issMarker.position.copy(newPos);
+            pathPoints.push(newPos.clone());
+            if (pathPoints.length > MAX_POINTS) pathPoints.shift();
+            drawPath();
+            if (isFirstLoad) {
+                camera.position.copy(new THREE.Vector3().copy(issMarker.position).normalize().multiplyScalar(
+                    CAMERA_DISTANCE));
+                isFirstLoad = false;
+            }
+        }
+
+        function updateISS() {
+            fetch("http://api.open-notify.org/iss-now.json")
+                .then(r => r.json())
+                .then(data => {
+                    const lat = parseFloat(data.iss_position.latitude);
+                    const lon = parseFloat(data.iss_position.longitude);
+                    document.getElementById('dati-iss').innerHTML = `
+                        <strong>Latitudine:</strong> ${lat}<br>
+                        <strong>Longitudine:</strong> ${lon}<br><br>
+                        <strong>Timestamp:</strong><br>${new Date(data.timestamp * 1000).toLocaleString()}
+                    `;
+                    fetch(
+                            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=it`
+                        )
+                        .then(res => res.json())
+                        .then(geoData => {
+                            let posizione = geoData.countryName || geoData.locality || "Oceano / Mare aperto";
+                            document.getElementById('geo-pos').innerText = posizione;
+                        });
+                    updateISSPosition(lat, lon);
+                    updateSunPosition();
+                });
+        }
+
+        fetch("http://api.open-notify.org/astros.json")
             .then(r => r.json())
             .then(data => {
-                const n = data.number
-                document.body.innerHTML = `<p class"numero_astronauti">${n} Astronauti in orbita:</p><br><br>`
+                let content = `<strong><u>${data.number}</u> ASTRONAUTI IN ORBITA:</strong><br><br>`;
                 data.people.forEach(a => {
-                    document.body.innerHTML += a.name + " 🛰️ " + a.craft + "<br>"
-                })
-            })
+                    content +=
+                        `<div class="astronaut-row"><span>${a.name}</span><span class="craft-name">${a.craft}</span></div>`;
+                });
+                document.getElementById('lista-astronauti').innerHTML = content;
+            });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init3D();
+        updateISS();
+        setInterval(updateISS, 5000);
     </script>
 </body>
 
