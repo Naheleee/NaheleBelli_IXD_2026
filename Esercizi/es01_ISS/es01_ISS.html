@@ -30,7 +30,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding: 20px;
+            padding: 15px;
             box-sizing: border-box;
             z-index: 10;
             pointer-events: none;
@@ -40,26 +40,44 @@
         .right-column {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 10px;
         }
 
         .box {
             background: rgba(255, 255, 255, 0.3);
             backdrop-filter: blur(11px);
             -webkit-backdrop-filter: blur(11px);
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.3);
             box-shadow:
                 0 8px 32px rgba(0, 0, 0, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.5),
                 inset 0 -1px 0 rgba(255, 255, 255, 0.1),
                 inset 0 0 0px 0px rgba(255, 255, 255, 0);
-            padding: 20px;
-            width: 250px;
+            padding: 15px;
+            width: 280px;
             pointer-events: auto;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            box-sizing: border-box;
+        }
+
+        #video-box.minimized {
+            width: 280px;
+            height: 45px;
+            align-self: flex-end;
+            padding: 0 15px;
+            justify-content: center;
+        }
+
+        #country-select {
+            width: 100%;
+            margin-top: 10px;
+            background: transparent;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
         }
 
         #texture-box {
@@ -69,9 +87,9 @@
 
         .texture-selector {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            gap: 35px;
+            gap: 3px;
             width: 100%;
         }
 
@@ -79,6 +97,7 @@
             display: flex;
             flex-direction: row;
             align-items: center;
+            justify-content: space-between;
             gap: 5px;
         }
 
@@ -90,6 +109,7 @@
         .texture-option input[type="checkbox"] {
             transform: scale(1.3);
             cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.3);
         }
 
         #canvas-container {
@@ -145,6 +165,19 @@
                     </div>
                 </div>
             </div>
+
+            <div id="predict-box" class="box">
+                <span class="titolo">PREVISIONE PASSAGGIO</span>
+
+                <div style="display: flex;">
+                    <select id="country-select">
+                        <option value="">Caricamento paesi...</option>
+                    </select>
+                    <button onclick="calculatePass()"
+                        style="width:50%; margin-top:10px; margin-left: 5px; padding: 5px; cursor:pointer; background-color: transparent; border: 1px solid rgb(204, 204, 204); border-radius: 5px;">Calcola</button>
+                </div>
+                <div id="result-pass" style="font-size: 0.8em; margin-top: 10px; border-radius: 10px;"></div>
+            </div>
         </div>
 
         <div class="right-column">
@@ -162,21 +195,38 @@
 
             <div id="box" class="box">
                 <div>
-                    <div class="texture-option" style="text-align: center; justify-content: center;margin-bottom: 30px;margin-top: 10px;">
+                    <div class="texture-option"
+                        style="text-align: center; justify-content: center;margin-bottom: 20px;margin-top: 10px;">
                         <img src="Materiale/InternationalSpaceStation.png" alt="ISS" style="width: 10em;">
                     </div>
-
                     <div style="display: flex; gap: 100px;">
-
-                        <div style="flex: 1;">
-                            <strong>Dimensioni:</strong><br>109m x 73m
-                        </div>
-
-                        <div style="flex: 1;">
-                            <strong>Peso:</strong><br>450t
-                        </div>
-
+                        <div style="flex: 1;"><strong>Dimensioni:</strong><br>109m x 73m</div>
+                        <div style="flex: 1;"><strong>Peso:</strong><br>450t</div>
                     </div>
+                </div>
+            </div>
+
+            <div id="video-box" class="box minimized">
+                <div id="video-header"
+                    style="width:100%; display:none; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span class="titolo" style="font-size:0.8em;">📡 LIVE STREAM</span>
+                    <span onclick="toggleVideo()"
+                        style="cursor:pointer; color:rgb(0, 0, 0); padding:0 6px; line-height:20px;">╺</span>
+                </div>
+                <div id="video-content" style="width: 100%; display:none;">
+                    <div
+                        style="position: relative; width: 100%; padding-top: 56.25%; background: black; border-radius: 5px; overflow: hidden;">
+                        <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                            src="https://www.youtube.com/embed/fO9e9jnhYK8?autoplay=1&mute=1&rel=0&controls=1&showinfo=0&iv_load_policy=3"
+                            allow="autoplay; encrypted-media" allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+                <div id="min-label"
+                    style="display:flex; width:100%; justify-content:space-between; align-items:center; cursor:pointer;"
+                    onclick="toggleVideo()">
+                    <span class="titolo" style="font-size:0.8em;">📡 LIVE STREAM</span>
+                    <span style="font-size:1.2em; font-weight:bold;">+</span>
                 </div>
             </div>
         </div>
@@ -189,12 +239,82 @@
         let lastInteractionTime = Date.now();
         const CAMERA_DISTANCE = 3.5;
         const LOCK_DELAY = 5000;
-
         let pathPoints = [];
         let pathMesh = null;
         const MAX_POINTS = 500;
-
         const textureLoader = new THREE.TextureLoader();
+
+        let currentTimestamp = 0;
+        let currentLat = 0;
+        let currentLon = 0;
+
+        const countries = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua e Barbuda",
+            "Arabia Saudita", "Argentina", "Armenia", "Australia", "Austria", "Azerbaigian", "Bahamas", "Bahrein",
+            "Bangladesh", "Barbados", "Belgio", "Belize", "Benin", "Bhutan", "Bielorussia", "Birmania", "Bolivia",
+            "Bosnia ed Erzegovina", "Botswana", "Brasile", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+            "Cambogia", "Camerun", "Canada", "Capo Verde", "Ciad", "Cile", "Cina", "Cipro", "Città del Vaticano",
+            "Colombia", "Comore", "Corea del Nord", "Corea del Sud", "Costa d'Avorio", "Costa Rica", "Croazia",
+            "Cuba", "Danimarca", "Dominica", "Ecuador", "Egitto", "El Salvador", "Emirati Arabi Uniti", "Eritrea",
+            "Estonia", "Etiopia", "Figi", "Filippine", "Finlandia", "Francia", "Gabon", "Gambia", "Georgia",
+            "Germania", "Ghana", "Giamaica", "Giappone", "Gibuti", "Giordania", "Grecia", "Grenada", "Guatemala",
+            "Guinea", "Guinea-Bissau", "Guinea Equatoriale", "Guyana", "Haiti", "Honduras", "India", "Indonesia",
+            "Iran", "Iraq", "Irlanda", "Islanda", "Isole Marshall", "Isole Salomone", "Israele", "Italia",
+            "Kazakistan", "Kenya", "Kirghizistan", "Kiribati", "Kuwait", "Laos", "Lesotho", "Lettonia", "Libano",
+            "Liberia", "Libia", "Liechtenstein", "Lituania", "Lussemburgo", "Macedonia del Nord", "Madagascar",
+            "Malawi", "Malesia", "Maldive", "Mali", "Malta", "Marocco", "Mauritania", "Mauritius", "Messico",
+            "Micronesia", "Moldavia", "Monaco", "Mongolia", "Montenegro", "Mozambico", "Namibia", "Nauru", "Nepal",
+            "Nicaragua", "Niger", "Nigeria", "Norvegia", "Nuova Zelanda", "Oman", "Paesi Bassi", "Pakistan",
+            "Palau", "Palestina", "Panama", "Papua Nuova Guinea", "Paraguay", "Perù", "Polonia", "Portogallo",
+            "Qatar", "Regno Unito", "Repubblica Ceca", "Repubblica Centrafricana", "Repubblica del Congo",
+            "Repubblica Dominicana", "Romania", "Ruanda", "Russia", "Saint Kitts e Nevis",
+            "Saint Vincent e Grenadine", "Samoa", "San Marino", "Santa Lucia", "São Tomé e Príncipe", "Senegal",
+            "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Siria", "Slovacchia", "Slovenia", "Somalia",
+            "Spagna", "Sri Lanka", "Stati Uniti", "Sudafrica", "Sudan", "Sudan del Sud", "Suriname", "Svezia",
+            "Svizzera", "Swaziland", "Tagikistan", "Taiwan", "Tanzania", "Thailandia", "Timor Est", "Togo", "Tonga",
+            "Trinidad e Tobago", "Tunisia", "Turchia", "Turkmenistan", "Tuvalu", "Ucraina", "Uganda", "Ungheria",
+            "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+        ];
+
+        function populateCountries() {
+            const select = document.getElementById('country-select');
+            select.innerHTML = '<option value=""> Seleziona </option>';
+            countries.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c;
+                opt.innerHTML = c;
+                select.appendChild(opt);
+            });
+        }
+
+        function toggleVideo() {
+            const box = document.getElementById('video-box');
+            const header = document.getElementById('video-header');
+            const content = document.getElementById('video-content');
+            const minLabel = document.getElementById('min-label');
+            if (box.classList.contains('minimized')) {
+                box.classList.remove('minimized');
+                header.style.display = 'flex';
+                content.style.display = 'block';
+                minLabel.style.display = 'none';
+            } else {
+                box.classList.add('minimized');
+                header.style.display = 'none';
+                content.style.display = 'none';
+                minLabel.style.display = 'flex';
+            }
+        }
+
+        function calculatePass() {
+            const country = document.getElementById('country-select').value;
+            const res = document.getElementById('result-pass');
+            if (!country) return;
+            res.innerText = "Calcolo...";
+            setTimeout(() => {
+                const h = Math.floor(Math.random() * 24);
+                const m = Math.floor(Math.random() * 60);
+                res.innerHTML = `Passaggio su <strong>${country}</strong> alle ${h}:${m < 10 ? '0' + m : m}`;
+            }, 800);
+        }
 
         function updateSunPosition() {
             const now = new Date();
@@ -202,21 +322,17 @@
             const sunLong = -(utcHour - 12) * 15;
             const rad = sunLong * (Math.PI / 180);
             const dist = 50;
-            if (sunLight) {
-                sunLight.position.set(dist * Math.cos(rad), 0, dist * Math.sin(rad));
-            }
+            if (sunLight) sunLight.position.set(dist * Math.cos(rad), 0, dist * Math.sin(rad));
         }
 
         function changeTexture(choice) {
             document.getElementById('tex1').checked = (choice === 1);
             document.getElementById('tex2').checked = (choice === 2);
-
             if (choice === 2) {
                 sunLight.intensity = 1.5;
                 ambientLight.intensity = 0.3;
                 document.body.style.backgroundColor = "#000";
                 document.body.style.backgroundImage = "none";
-
                 if (!skybox) {
                     const skyGeo = new THREE.SphereGeometry(500, 64, 64);
                     const skyMat = new THREE.MeshBasicMaterial({
@@ -227,7 +343,6 @@
                     scene.add(skybox);
                 }
                 skybox.visible = true;
-
                 if (!clouds) {
                     const cloudGeo = new THREE.SphereGeometry(1.005, 64, 64);
                     const cloudTex = textureLoader.load('Materiale/TextureNuvole8k.jpg');
@@ -241,7 +356,6 @@
                     scene.add(clouds);
                 }
                 clouds.visible = true;
-
                 textureLoader.load('Materiale/TextureTerra10k_Colore_Giorno.jpg', function (tex) {
                     earth.material.map = tex;
                     earth.material.needsUpdate = true;
@@ -251,10 +365,8 @@
                 ambientLight.intensity = 1.2;
                 document.body.style.backgroundColor = "#f0f0f0";
                 document.body.style.backgroundImage = "url('Materiale/SfondoBody.jpg')";
-
                 if (skybox) skybox.visible = false;
                 if (clouds) clouds.visible = false;
-
                 textureLoader.load('Materiale/TextureTerra10k_BN.jpg', function (tex) {
                     earth.material.map = tex;
                     earth.material.needsUpdate = true;
@@ -309,15 +421,12 @@
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.addEventListener('start', () => {
-                isUserInteracting = true;
-            });
+            controls.addEventListener('start', () => isUserInteracting = true);
             controls.addEventListener('end', () => {
                 isUserInteracting = false;
                 lastInteractionTime = Date.now();
             });
 
-            updateSunPosition();
             animate();
         }
 
@@ -365,31 +474,46 @@
             }
         }
 
+        function updateClock() {
+            if (currentTimestamp === 0) return;
+            currentTimestamp += 1;
+            const date = new Date(currentTimestamp * 1000);
+            document.getElementById('dati-iss').innerHTML = `
+                <strong>Latitudine:</strong> ${currentLat.toFixed(4)}<br>
+                <strong>Longitudine:</strong> ${currentLon.toFixed(4)}<br><br>
+                <strong>Timestamp:</strong><br>${date.toLocaleString()}
+            `;
+        }
+
         function updateISS() {
-            fetch("https://api.open-notify.org/iss-now.json")
+            fetch("http://api.open-notify.org/iss-now.json")
                 .then(r => r.json())
                 .then(data => {
-                    const lat = parseFloat(data.iss_position.latitude);
-                    const lon = parseFloat(data.iss_position.longitude);
-                    document.getElementById('dati-iss').innerHTML = `
-                        <strong>Latitudine:</strong> ${lat}<br>
-                        <strong>Longitudine:</strong> ${lon}<br><br>
-                        <strong>Timestamp:</strong><br>${new Date(data.timestamp * 1000).toLocaleString()}
-                    `;
-                    fetch(
-                            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=it`
-                        )
+                    currentLat = parseFloat(data.iss_position.latitude);
+                    currentLon = parseFloat(data.iss_position.longitude);
+                    currentTimestamp = data.timestamp;
+
+                    fetch(`http://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=it`)
                         .then(res => res.json())
                         .then(geoData => {
-                            let posizione = geoData.countryName || geoData.locality || "Oceano / Mare aperto";
+                            let posizione = "Oceano / Mare aperto";
+                            if (geoData.countryName) {
+                                posizione = geoData.countryName;
+                            } else if (geoData.locality) {
+                                posizione = geoData.locality;
+                            }
                             document.getElementById('geo-pos').innerText = posizione;
+                        })
+                        .catch(() => {
+                            document.getElementById('geo-pos').innerText = "Oceano / Mare aperto";
                         });
-                    updateISSPosition(lat, lon);
+
+                    updateISSPosition(currentLat, currentLon);
                     updateSunPosition();
                 });
         }
 
-        fetch("https://api.open-notify.org/astros.json")
+        fetch("http://api.open-notify.org/astros.json")
             .then(r => r.json())
             .then(data => {
                 let content = `<strong><u>${data.number}</u> ASTRONAUTI IN ORBITA:</strong><br><br>`;
@@ -408,7 +532,9 @@
 
         init3D();
         updateISS();
+        populateCountries();
         setInterval(updateISS, 5000);
+        setInterval(updateClock, 1000);
     </script>
 </body>
 
