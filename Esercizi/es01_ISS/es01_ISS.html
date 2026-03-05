@@ -364,7 +364,6 @@
                 sunLight.intensity = 0;
                 ambientLight.intensity = 1.2;
                 document.body.style.backgroundColor = "#f0f0f0";
-                document.body.style.backgroundImage = "url('Materiale/SfondoBody.jpg')";
                 if (skybox) skybox.visible = false;
                 if (clouds) clouds.visible = false;
                 textureLoader.load('Materiale/TextureTerra10k_BN.jpg', function (tex) {
@@ -485,44 +484,53 @@
             `;
         }
 
-        function updateISS() {
-            fetch("http://api.open-notify.org/iss-now.json")
-                .then(r => r.json())
-                .then(data => {
-                    currentLat = parseFloat(data.iss_position.latitude);
-                    currentLon = parseFloat(data.iss_position.longitude);
-                    currentTimestamp = data.timestamp;
+        async function updateISS() {
+            const proxy = "https://corsproxy.io/?";
+            const target = encodeURIComponent("http://api.open-notify.org/iss-now.json?t=" + Date.now());
 
-                    fetch(`http://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=it`)
-                        .then(res => res.json())
-                        .then(geoData => {
-                            let posizione = "Oceano / Mare aperto";
-                            if (geoData.countryName) {
-                                posizione = geoData.countryName;
-                            } else if (geoData.locality) {
-                                posizione = geoData.locality;
-                            }
-                            document.getElementById('geo-pos').innerText = posizione;
-                        })
-                        .catch(() => {
-                            document.getElementById('geo-pos').innerText = "Oceano / Mare aperto";
-                        });
+            try {
+                const r = await fetch(proxy + target);
+                const data = await r.json();
+                currentLat = parseFloat(data.iss_position.latitude);
+                currentLon = parseFloat(data.iss_position.longitude);
+                currentTimestamp = data.timestamp;
 
-                    updateISSPosition(currentLat, currentLon);
-                    updateSunPosition();
-                });
+                // Reverse Geocoding (HTTPS, non serve proxy)
+                fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=it`)
+                    .then(res => res.json())
+                    .then(geoData => {
+                        let posizione = "Oceano / Mare aperto";
+                        if (geoData.countryName) {
+                            posizione = geoData.countryName;
+                        } else if (geoData.locality) {
+                            posizione = geoData.locality;
+                        }
+                        document.getElementById('geo-pos').innerText = posizione;
+                    })
+                    .catch(() => {
+                        document.getElementById('geo-pos').innerText = "Oceano / Mare aperto";
+                    });
+
+                updateISSPosition(currentLat, currentLon);
+                updateSunPosition();
+            } catch (e) { console.error("Errore fetch ISS:", e); }
         }
 
-        fetch("http://api.open-notify.org/astros.json")
-            .then(r => r.json())
-            .then(data => {
+        // Fetch Astronauti con Proxy per GitHub
+        async function updateAstronauts() {
+            const proxy = "https://corsproxy.io/?";
+            const target = encodeURIComponent("http://api.open-notify.org/astros.json");
+            try {
+                const r = await fetch(proxy + target);
+                const data = await r.json();
                 let content = `<strong><u>${data.number}</u> ASTRONAUTI IN ORBITA:</strong><br><br>`;
                 data.people.forEach(a => {
                     content +=
                         `<div class="astronaut-row"><span>${a.name}</span><span class="craft-name">${a.craft}</span></div>`;
                 });
                 document.getElementById('lista-astronauti').innerHTML = content;
-            });
+            } catch (e) { console.error("Errore fetch Astronauti:", e); }
+        }
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -532,6 +540,7 @@
 
         init3D();
         updateISS();
+        updateAstronauts();
         populateCountries();
         setInterval(updateISS, 5000);
         setInterval(updateClock, 1000);
