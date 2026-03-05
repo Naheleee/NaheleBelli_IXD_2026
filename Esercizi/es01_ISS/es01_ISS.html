@@ -22,6 +22,26 @@
             transition: background-color 0.5s;
         }
 
+        /* TASTO MOSTRA/NASCONDI UI */
+        #ui-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
         .main-container {
             position: absolute;
             top: 0;
@@ -139,14 +159,89 @@
             font-weight: bold;
             color: #000000;
         }
+
+        .dimensionipeso {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #ui-toggle {
+            opacity: 0;
+            right: 30px;
+            /* <--- AGGIUNTO: Lo mostra solo su Mobile */
+        }
+
+
+        /* Media Query per Mobile - AGGIORNATA SOLO PER SCROLL INTERA COLONNA */
+        @media (max-width: 768px) {
+            .main-container {
+                height: 100vh;
+                pointer-events: none;
+                flex-direction: column;
+                align-items: center;
+                overflow-y: auto;
+                /* Abilita lo scroll di tutta la colonna */
+                padding-top: 70px;
+                /* Spazio per il bottone occhio */
+            }
+
+            .left-column,
+            .right-column {
+                width: 100%;
+                gap: 10px;
+                align-items: center;
+                pointer-events: none;
+                flex-shrink: 0;
+                /* Impedisce ai box di rimpicciolirsi */
+            }
+
+            .box {
+                width: 90%;
+                font-size: 1em;
+                pointer-events: auto;
+                margin-bottom: 5px;
+                padding: 20px;
+                flex-shrink: 0;
+                /* Forza il box a mantenere la sua altezza */
+            }
+
+            #video-box.minimized {
+                width: 90%;
+                align-self: center;
+            }
+
+            body {
+                overflow: hidden;
+                /* Blocca il body, scorre solo il main-container */
+            }
+
+            .titolo {
+                font-size: 0.9em;
+            }
+
+            #predict-box {
+                margin-bottom: 10px;
+                padding-bottom: 0px;
+            }
+
+            #ui-toggle {
+                opacity: 1;
+                right: 30px;
+                /* <--- AGGIUNTO: Lo mostra solo su Mobile */
+            }
+        }
     </style>
 </head>
 
 <body>
 
+    <button id="ui-toggle" onclick="toggleUI()">▬</button>
+
     <div id="canvas-container"></div>
 
-    <div class="main-container">
+    <div class="main-container" id="ui-layer">
         <div class="left-column">
             <div id="astronauts-box" class="box">
                 <div id="lista-astronauti" style="width: 100%;">Caricamento astronauti...</div>
@@ -194,15 +289,14 @@
             </div>
 
             <div id="box" class="box">
-                <div>
-                    <div class="texture-option"
-                        style="text-align: center; justify-content: center;margin-bottom: 20px;margin-top: 10px;">
-                        <img src="Materiale/InternationalSpaceStation.png" alt="ISS" style="width: 10em;">
-                    </div>
-                    <div style="display: flex; gap: 100px;">
-                        <div style="flex: 1;"><strong>Dimensioni:</strong><br>109m x 73m</div>
-                        <div style="flex: 1;"><strong>Peso:</strong><br>450t</div>
-                    </div>
+                <div class="texture-option"
+                    style="text-align: center; justify-content: center; margin: 10px 0 20px 0; width: 100%;">
+                    <img src="Materiale/InternationalSpaceStation.png" alt="ISS" style="width: 10em;">
+                </div>
+
+                <div class="dimensionipeso">
+                    <div><strong>Dimensioni:</strong><br>109m x 73m</div>
+                    <div><strong>Peso:</strong><br>450t</div>
                 </div>
             </div>
 
@@ -237,7 +331,7 @@
         let isUserInteracting = false;
         let isFirstLoad = true;
         let lastInteractionTime = Date.now();
-        const CAMERA_DISTANCE = 3.5;
+        let CAMERA_DISTANCE = window.innerWidth < 768 ? 7 : 3.5;
         const LOCK_DELAY = 5000;
         let pathPoints = [];
         let pathMesh = null;
@@ -274,6 +368,11 @@
             "Trinidad e Tobago", "Tunisia", "Turchia", "Turkmenistan", "Tuvalu", "Ucraina", "Uganda", "Ungheria",
             "Uruguay", "Uzbekistan", "Vanuatu", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
         ];
+
+        function toggleUI() {
+            const ui = document.getElementById('ui-layer');
+            ui.style.display = ui.style.display === 'none' ? 'flex' : 'none';
+        }
 
         function populateCountries() {
             const select = document.getElementById('country-select');
@@ -495,28 +594,30 @@
                 currentLon = parseFloat(data.iss_position.longitude);
                 currentTimestamp = data.timestamp;
 
-                // Reverse Geocoding (HTTPS, non serve proxy)
-                fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=it`)
-                    .then(res => res.json())
-                    .then(geoData => {
-                        let posizione = "Oceano / Mare aperto";
-                        if (geoData.countryName) {
-                            posizione = geoData.countryName;
-                        } else if (geoData.locality) {
-                            posizione = geoData.locality;
-                        }
-                        document.getElementById('geo-pos').innerText = posizione;
-                    })
-                    .catch(() => {
-                        document.getElementById('geo-pos').innerText = "Oceano / Mare aperto";
-                    });
+                const geoRes = await fetch(
+                    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${currentLat}&longitude=${currentLon}&localityLanguage=it`
+                );
+                const geoData = await geoRes.json();
+
+                let posizione = "Oceano / Mare aperto";
+                if (geoData.countryName) {
+                    posizione = geoData.countryName;
+                } else if (geoData.principalSubdivision) {
+                    posizione = geoData.principalSubdivision;
+                } else if (geoData.locality) {
+                    posizione = geoData.locality;
+                }
+
+                document.getElementById('geo-pos').innerText = posizione;
 
                 updateISSPosition(currentLat, currentLon);
                 updateSunPosition();
-            } catch (e) { console.error("Errore fetch ISS:", e); }
+            } catch (e) {
+                console.error("Errore fetch ISS:", e);
+                document.getElementById('geo-pos').innerText = "Errore connessione";
+            }
         }
 
-        // Fetch Astronauti con Proxy per GitHub
         async function updateAstronauts() {
             const proxy = "https://corsproxy.io/?";
             const target = encodeURIComponent("http://api.open-notify.org/astros.json");
@@ -529,7 +630,9 @@
                         `<div class="astronaut-row"><span>${a.name}</span><span class="craft-name">${a.craft}</span></div>`;
                 });
                 document.getElementById('lista-astronauti').innerHTML = content;
-            } catch (e) { console.error("Errore fetch Astronauti:", e); }
+            } catch (e) {
+                console.error("Errore fetch Astronauti:", e);
+            }
         }
 
         window.addEventListener('resize', () => {
