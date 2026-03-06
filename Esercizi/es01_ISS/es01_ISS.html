@@ -31,7 +31,7 @@
             background: rgba(255, 255, 255, 0.6);
             backdrop-filter: blur(5px);
             border: 1px solid #ccc;
-            border-radius: 50%;
+            border-radius: 30%;
             width: 40px;
             height: 40px;
             cursor: pointer;
@@ -379,7 +379,15 @@
 
         function toggleUI() {
             const ui = document.getElementById('ui-layer');
-            ui.style.display = ui.style.display === 'none' ? 'flex' : 'none';
+            const btn = document.getElementById('ui-toggle');
+
+            if (ui.style.display === 'none') {
+                ui.style.display = 'flex';
+                btn.innerText = '▬';
+            } else {
+                ui.style.display = 'none';
+                btn.innerText = '✚';
+            }
         }
 
         function populateCountries() {
