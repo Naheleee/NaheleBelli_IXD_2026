@@ -1,21 +1,25 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CelesTrak Active Objects</title>
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       background: #05070d;
-      color: #d7def2;
+      color: #78b3ff;
       overflow: hidden;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: Arial, Helvetica, sans-serif;
     }
+
     canvas {
       display: block;
     }
+
     .hint {
       position: fixed;
       left: 12px;
@@ -24,28 +28,107 @@
       opacity: 0.8;
       pointer-events: none;
     }
+
+    .stats {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      color: #fd8357;
+      /*#ff9800*/
+      font-weight: bold;
+      font-size: 15px;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Targhetta aggiuntiva sotto il testo a sinistra */
+    .details {
+      position: fixed;
+      top: 30px;
+      left: 10px;
+      color: #fd8357;
+      font-size: 12px;
+      pointer-events: none;
+      background: rgba(255, 188, 120, 0.1);
+      border: 1px solid #fd8357;
+      padding: 5px 8px;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+
+    /* Targhetta dei filtri sotto i dettagli */
+    .filters {
+      position: fixed;
+      top: 75px;
+      left: 10px;
+      background: rgba(255, 188, 120, 0.1);
+      border: 1px solid #fd8357;
+      padding: 8px;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12px;
+    }
+
+    .filters label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 153px;
+      color: #fd8357;
+    }
+
+    /* Stile per il testo rosso a destra */
+    .stats-right {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      color: #78b3ff;
+      font-weight: bold;
+      font-size: 15px;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.9.4/lib/p5.min.js"></script>
 </head>
+
 <body>
-  <div class="hint">Drag to rotate | wheel to zoom | color: Mean Motion | scale: Earth radius</div>
+  <div class="stats" id="counter">Loading...</div>
+  <div class="details" id="sub-counter">Starlink: 0 | Others: 0</div>
+
+  <div class="filters">
+    <label><input type="checkbox" id="filter-all" checked> All</label>
+    <label><input type="checkbox" id="filter-starlink" checked> Starlink</label>
+    <label><input type="checkbox" id="filter-others" checked> Others</label>
+  </div>
+
+  <div class="stats-right">🔵 Earth</div>
+
+  <div class="hint">Drag to rotate | wheel to zoom</div>
 
   <script>
-	// https://celestrak.org/NORAD/elements/index.php?FORMAT=json
-    const DATA_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json";
-    const MU_EARTH = 398600.4418; // km^3 / s^2
+    const DATA_URL = "https://corsproxy.io/?https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json";
+    const MU_EARTH = 398600.4418;
     const EARTH_RADIUS_KM = 6378.137;
     const EARTH_RADIUS_PX = 50;
 
     let satPoints = [];
     let loading = true;
     let errorMessage = "";
+    let earthTexture;
+    let starlinkCount = 0;
+
+    function preload() {
+      earthTexture = loadImage('Materiale/TextureTerra10k_BN.jpg');
+    }
 
     function degToRad(v) {
       return v * Math.PI / 180;
     }
 
-    // Solve M = E - e*sin(E) for E via Newton iterations.
     function solveKepler(meanAnomalyRad, eccentricity) {
       let E = meanAnomalyRad;
       for (let i = 0; i < 6; i += 1) {
@@ -64,122 +147,132 @@
       const e = Number(sat.ECCENTRICITY);
       const meanMotionRevPerDay = Number(sat.MEAN_MOTION);
 
-      if (
-        !Number.isFinite(inc) ||
-        !Number.isFinite(raan) ||
-        !Number.isFinite(argp) ||
-        !Number.isFinite(meanAnomaly) ||
-        !Number.isFinite(e) ||
-        !Number.isFinite(meanMotionRevPerDay) ||
-        meanMotionRevPerDay <= 0
-      ) {
-        return null;
-      }
+      if (!Number.isFinite(inc) || meanMotionRevPerDay <= 0) return null;
 
-      const n = meanMotionRevPerDay * 2 * Math.PI / 86400; // rad / s
-      const a = Math.cbrt(MU_EARTH / (n * n)); // km
+      const n = meanMotionRevPerDay * 2 * Math.PI / 86400;
+      const a = Math.cbrt(MU_EARTH / (n * n));
       const E = solveKepler(meanAnomaly, e);
-      const nu = 2 * Math.atan2(
-        Math.sqrt(1 + e) * Math.sin(E / 2),
-        Math.sqrt(1 - e) * Math.cos(E / 2)
-      );
+      const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
       const r = a * (1 - e * Math.cos(E));
       const u = argp + nu;
 
-      const cosO = Math.cos(raan);
-      const sinO = Math.sin(raan);
-      const cosI = Math.cos(inc);
-      const sinI = Math.sin(inc);
-      const cosU = Math.cos(u);
-      const sinU = Math.sin(u);
+      const cosO = Math.cos(raan),
+        sinO = Math.sin(raan);
+      const cosI = Math.cos(inc),
+        sinI = Math.sin(inc);
+      const cosU = Math.cos(u),
+        sinU = Math.sin(u);
 
-      const x = r * (cosO * cosU - sinO * sinU * cosI);
-      const y = r * (sinO * cosU + cosO * sinU * cosI);
-      const z = r * (sinU * sinI);
-      return { x, y, z, meanMotionRevPerDay };
+      return {
+        x: r * (cosO * cosU - sinO * sinU * cosI),
+        y: r * (sinO * cosU + cosO * sinU * cosI),
+        z: r * (sinU * sinI),
+        meanMotionRevPerDay
+      };
     }
 
     async function fetchElements() {
       try {
         const response = await fetch(DATA_URL);
-        if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-        }
-
+        if (!response.ok) throw new Error("HTTP " + response.status);
         const json = await response.json();
         const raw = Array.isArray(json) ? json : [];
-        satPoints = raw
-          .map(elementToEciKm)
-          .filter(Boolean)
-          .map((p) => {
+        const total = raw.length;
+
+        for (let i = 0; i < total; i++) {
+          const rawSat = raw[i];
+          const p = elementToEciKm(rawSat);
+          if (p) {
+            const isStarlink = rawSat.OBJECT_NAME && rawSat.OBJECT_NAME.includes("STARLINK");
+            if (isStarlink) {
+              starlinkCount++;
+            }
+
             const t = constrain(map(p.meanMotionRevPerDay, 1, 16, 0, 1), 0, 1);
-            return {
+            satPoints.push({
               x: p.x * (EARTH_RADIUS_PX / EARTH_RADIUS_KM),
               y: p.y * (EARTH_RADIUS_PX / EARTH_RADIUS_KM),
               z: p.z * (EARTH_RADIUS_PX / EARTH_RADIUS_KM),
               r: lerp(90, 255, t),
               g: lerp(180, 130, t),
-              b: lerp(255, 90, t)
-            };
-          });
+              b: lerp(255, 90, t),
+              isStarlink: isStarlink
+            });
+          }
+
+          if (i % 50 === 0 || i === total - 1) {
+            document.getElementById('counter').innerText = `${satPoints.length} / ${total} Satellites`;
+            document.getElementById('sub-counter').innerText =
+              `Starlink: ${starlinkCount} | Others: ${satPoints.length - starlinkCount}`;
+          }
+
+          if (i % 200 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+
       } catch (err) {
-        errorMessage = "Failed to fetch data: " + (err && err.message ? err.message : String(err));
+        errorMessage = "Error: " + err.message;
+        document.getElementById('counter').innerText = "Errore Dati";
       } finally {
         loading = false;
-        console.log("number of satPoints: " + satPoints.length);
       }
     }
 
     function setup() {
       createCanvas(windowWidth, windowHeight, WEBGL);
       pixelDensity(1);
-      noStroke();
+      perspective(PI / 3, width / height, 1, 5000);
+      camera(0, -100, 500, 0, 0, 0, 0, 1, 0);
+
+      // Gestione checkbox "Tutti"
+      document.getElementById('filter-all').addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        document.getElementById('filter-starlink').checked = isChecked;
+        document.getElementById('filter-others').checked = isChecked;
+      });
+
       fetchElements();
     }
 
     function drawEarth() {
       push();
-      ambientMaterial(25, 55, 140);
-      sphere(EARTH_RADIUS_PX, 28, 20);
+      if (earthTexture) {
+        texture(earthTexture);
+      } else {
+        fill(25, 55, 140);
+      }
+      noStroke();
+      sphere(EARTH_RADIUS_PX, 32, 24);
       pop();
     }
 
     function drawSatPoints() {
+      const showStarlink = document.getElementById('filter-starlink').checked;
+      const showOthers = document.getElementById('filter-others').checked;
+
       strokeWeight(3);
       noFill();
+      beginShape(POINTS);
       for (const p of satPoints) {
-        stroke(p.r, p.g, p.b, 215);
-        point(p.x, -p.z, p.y); // simple axis remap for intuitive view
+        if ((p.isStarlink && showStarlink) || (!p.isStarlink && showOthers)) {
+          stroke(p.r, p.g, p.b, 215);
+          vertex(p.x, -p.z, p.y);
+        }
       }
-      noStroke();
+      endShape();
     }
 
     function draw() {
       background(5, 7, 13);
-      orbitControl(1.0, 1.0, 0.1);
+      orbitControl(1.0, 1.0, 1.0);
+      ambientLight(150);
+      directionalLight(255, 255, 255, 0.5, 0.5, -1);
+      rotateY(frameCount * 0.0005);
 
-      ambientLight(110);
-      directionalLight(180, 200, 255, -0.5, -0.8, -0.6);
-      rotateY(frameCount * 0.002);
-
-      if (!loading && !errorMessage) {
+      if (!errorMessage) {
         drawSatPoints();
       }
+
       drawEarth();
-
-      if (loading || errorMessage) {
-        resetMatrix();
-        translate(-width / 2, -height / 2);
-        fill(loading ? color(180, 200, 255) : color(255, 120, 120));
-        // textSize(16);
-        // text(loading ? "Loading CelesTrak active objects..." : errorMessage, 20, 32);
-      }
-
-      resetMatrix();
-      translate(-width / 2, -height / 2);
-      fill(180, 200, 255);
-      // textSize(13);
-      // text("Objects: " + satPoints.length, 20, 52);
     }
 
     function windowResized() {
@@ -187,4 +280,5 @@
     }
   </script>
 </body>
+
 </html>
