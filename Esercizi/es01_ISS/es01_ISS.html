@@ -152,7 +152,7 @@
             justify-content: space-between;
             width: 100%;
             font-size: 0.9em;
-            margin-bottom: 4px;
+            margin-bottom: 0px;
         }
 
         .craft-name {
@@ -187,9 +187,18 @@
                 /* Spazio per il bottone occhio */
             }
 
-            .left-column,
+            .left-column {
+                width: 100%;
+                gap: 10px;
+                align-items: center;
+                pointer-events: none;
+                flex-shrink: 0;
+                /* Impedisce ai box di rimpicciolirsi */
+            }
+
             .right-column {
                 width: 100%;
+                margin-bottom: 700px;
                 gap: 10px;
                 align-items: center;
                 pointer-events: none;
@@ -223,7 +232,7 @@
 
             #predict-box {
                 margin-bottom: 10px;
-                padding-bottom: 0px;
+                padding-bottom: 10px;
             }
 
             #ui-toggle {
