@@ -35,11 +35,10 @@
 
         // --- CONFIGURAZIONE MODULO 3D ---
         const modConfig = {
-            // Assicurati che il nome della cartella non abbia spazi o usa encodeURI se necessario
             path: 'MATERIALE_LUNA/Lunar_module.gltf', 
             scale: 0.8,
             rotationZ: 30,
-            pos: { x: 100, y: 50, z: -300 } // y è l'altezza dal suolo
+            pos: { x: 100, y: 50, z: -300 } 
         };
         // --------------------------------
 
@@ -49,9 +48,7 @@
         init();
 
         function init() {
-            // Scena e Camera
             scene = new THREE.Scene();
-            // MODIFICA: Aumentato l'ultimo parametro (far) da 2000 a 10000 per evitare il terreno nero a distanza
             camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 10000);
             camera.position.set(0, 150, 550);
 
@@ -60,11 +57,9 @@
             renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // Controlli Mouse
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
 
-            // Luci (simili ai tuoi valori p5)
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
             scene.add(ambientLight);
 
@@ -72,15 +67,12 @@
             dirLight.position.set(500, 200, 100);
             scene.add(dirLight);
 
-            // Caricamento Immagine per Terreno (Heightmap)
             const loader = new THREE.TextureLoader();
             loader.load('MATERIALE_LUNA/moon_small_2.png', function(texture) {
                 createTerrain(texture);
             });
 
-            // Caricamento Modello GLTF
             const gltfLoader = new GLTFLoader();
-            // Nota: Su mobile assicuratevi di usare HTTPS, altrimenti il caricatore potrebbe bloccarsi
             gltfLoader.load(modConfig.path, (gltf) => {
                 const model = gltf.scene;
                 model.scale.set(modConfig.scale, modConfig.scale, modConfig.scale);
@@ -96,12 +88,10 @@
         function createTerrain(texture) {
             const width = texture.image.width;
             const height = texture.image.height;
-            const spacing = 2; // La tua spaziatura
+            const spacing = 2; 
 
-            // Creiamo la geometria piana
             const geometry = new THREE.PlaneGeometry(width * spacing, height * spacing, width - 1, height - 1);
             
-            // Analisi pixel per altezze (simile a getHeight)
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
@@ -114,8 +104,7 @@
             const maxZ = 10;
 
             for (let i = 0, j = 0; i < vertices.length; i += 3, j += 4) {
-                const brightness = data[j]; // Canale R
-                // In Three.js il piano è XY, l'altezza la mettiamo su Z
+                const brightness = data[j]; 
                 vertices[i + 2] = (brightness / 255) * (maxZ - minZ) + minZ;
             }
             
@@ -127,17 +116,14 @@
             });
 
             terrain = new THREE.Mesh(geometry, material);
-            terrain.rotation.x = -Math.PI / 2; // Mette il terreno orizzontale
+            terrain.rotation.x = -Math.PI / 2; 
             scene.add(terrain);
         }
 
         function animate() {
             requestAnimationFrame(animate);
-
-            // Rotazione Automatica
             autoRotation += 0.002;
             scene.rotation.y = autoRotation;
-
             controls.update();
             renderer.render(scene, camera);
         }
