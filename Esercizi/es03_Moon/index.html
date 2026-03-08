@@ -36,7 +36,7 @@
         // --- CONFIGURAZIONE MODULO 3D ---
         const modConfig = {
             // Assicurati che il nome della cartella non abbia spazi o usa encodeURI se necessario
-            path: 'MATERIALE LUNA/Lunar_module.gltf', 
+            path: 'MATERIALE_LUNA/Lunar_module.gltf', 
             scale: 0.8,
             rotationZ: 30,
             pos: { x: 100, y: 50, z: -300 } // y è l'altezza dal suolo
@@ -74,7 +74,7 @@
 
             // Caricamento Immagine per Terreno (Heightmap)
             const loader = new THREE.TextureLoader();
-            loader.load('MATERIALE LUNA/moon_small_2.png', function(texture) {
+            loader.load('MATERIALE_LUNA/moon_small_2.png', function(texture) {
                 createTerrain(texture);
             });
 
