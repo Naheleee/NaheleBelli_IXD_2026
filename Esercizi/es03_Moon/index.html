@@ -4,12 +4,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Moon Terrain - Three.js GLTF Version</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
 </head>
 
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.11/lib/p5.min.js"></script>
-    <script src="script.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // --- CONFIGURAZIONE MODULO 3D ---
+        const modConfig = {
+            path: 'MATERIALE LUNA/Lunar_module.gltf', // Deve esserci il .bin nella stessa cartella
+            scale: 0.8,
+            rotationZ: 30,
+            pos: { x: 100, y: 50, z: -300 } // y è l'altezza dal suolo
+        };
+        // --------------------------------
+
+        let scene, camera, renderer, controls, terrain;
+        let autoRotation = 0;
+
+        init();
+
+        function init() {
+            // Scena e Camera
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 150, 550);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            // Controlli Mouse
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            // Luci (simili ai tuoi valori p5)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+            dirLight.position.set(500, 200, 100);
+            scene.add(dirLight);
+
+            // Caricamento Immagine per Terreno (Heightmap)
+            const loader = new THREE.TextureLoader();
+            loader.load('MATERIALE LUNA/moon_small_2.png', function(texture) {
+                createTerrain(texture);
+            });
+
+            // Caricamento Modello GLTF
+            const gltfLoader = new GLTFLoader();
+            gltfLoader.load(modConfig.path, (gltf) => {
+                const model = gltf.scene;
+                model.scale.set(modConfig.scale, modConfig.scale, modConfig.scale);
+                model.position.set(modConfig.pos.x, modConfig.pos.y, modConfig.pos.z);
+                scene.add(model);
+            }, undefined, (error) => {
+                console.error("Errore caricamento GLTF:", error);
+            });
+
+            animate();
+        }
+
+        function createTerrain(texture) {
+            const width = texture.image.width;
+            const height = texture.image.height;
+            const spacing = 2; // La tua spaziatura
+
+            // Creiamo la geometria piana
+            const geometry = new THREE.PlaneGeometry(width * spacing, height * spacing, width - 1, height - 1);
+            
+            // Analisi pixel per altezze (simile a getHeight)
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(texture.image, 0, 0);
+            const data = ctx.getImageData(0, 0, width, height).data;
+
+            const vertices = geometry.attributes.position.array;
+            const minZ = -10;
+            const maxZ = 10;
+
+            for (let i = 0, j = 0; i < vertices.length; i += 3, j += 4) {
+                const brightness = data[j]; // Canale R
+                // In Three.js il piano è XY, l'altezza la mettiamo su Z
+                vertices[i + 2] = (brightness / 255) * (maxZ - minZ) + minZ;
+            }
+            
+            geometry.computeVertexNormals();
+
+            const material = new THREE.MeshStandardMaterial({ 
+                map: texture,
+                side: THREE.DoubleSide
+            });
+
+            terrain = new THREE.Mesh(geometry, material);
+            terrain.rotation.x = -Math.PI / 2; // Mette il terreno orizzontale
+            scene.add(terrain);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotazione Automatica
+            autoRotation += 0.002;
+            scene.rotation.y = autoRotation;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
 
 </html>

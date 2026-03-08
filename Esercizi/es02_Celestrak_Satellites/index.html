@@ -56,10 +56,10 @@
       margin-top: 5px;
     }
 
-    /* Targhetta dei filtri sotto i dettagli */
+    /* Stile generale della sezione filtri */
     .filters {
       position: fixed;
-      top: 75px;
+      top: 70px;
       left: 10px;
       background: rgba(255, 188, 120, 0.1);
       border: 1px solid #fd8357;
@@ -78,6 +78,45 @@
       gap: 10px;
       width: 153px;
       color: #fd8357;
+      user-select: none;
+      /* Evita la selezione del testo al click */
+    }
+
+    /* Modifica specifica per la checkbox */
+    .filters input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      /* Supporto Safari */
+      width: 14px;
+      height: 14px;
+      border: 1px solid #fd8357;
+      border-radius: 2px;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      display: grid;
+      place-content: center;
+      margin: 0;
+    }
+
+    /* Effetto quando la checkbox è selezionata (il "segno" interno) */
+    .filters input[type="checkbox"]::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      transform: scale(0);
+      transition: 120ms transform ease-in-out;
+      background-color: #fd8357;
+      /* Crea un piccolo quadratino pieno invece della spunta classica */
+    }
+
+    .filters input[type="checkbox"]:checked::before {
+      transform: scale(1);
+    }
+
+    /* Feedback visivo al passaggio del mouse */
+    .filters input[type="checkbox"]:hover {
+      background: rgba(253, 131, 87, 0.2);
     }
 
     /* Stile per il testo rosso a destra */
@@ -101,8 +140,8 @@
 
   <div class="filters">
     <label><input type="checkbox" id="filter-all" checked> All</label>
-    <label><input type="checkbox" id="filter-starlink" checked> Starlink</label>
-    <label><input type="checkbox" id="filter-others" checked> Others</label>
+    <label><input type="checkbox" id="filter-starlink"> Starlink</label>
+    <label><input type="checkbox" id="filter-others"> Others</label>
   </div>
 
   <div class="stats-right">🔵 Earth</div>
@@ -223,11 +262,36 @@
       perspective(PI / 3, width / height, 1, 5000);
       camera(0, -100, 500, 0, 0, 0, 0, 1, 0);
 
-      // Gestione checkbox "Tutti"
-      document.getElementById('filter-all').addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        document.getElementById('filter-starlink').checked = isChecked;
-        document.getElementById('filter-others').checked = isChecked;
+      // Gestione checkbox mutualmente esclusive
+      const cbAll = document.getElementById('filter-all');
+      const cbStarlink = document.getElementById('filter-starlink');
+      const cbOthers = document.getElementById('filter-others');
+
+      cbAll.addEventListener('change', () => {
+        if (cbAll.checked) {
+          cbStarlink.checked = false;
+          cbOthers.checked = false;
+        } else if (!cbStarlink.checked && !cbOthers.checked) {
+          cbAll.checked = true; // Impedisce di deselezionare tutto
+        }
+      });
+
+      cbStarlink.addEventListener('change', () => {
+        if (cbStarlink.checked) {
+          cbAll.checked = false;
+          cbOthers.checked = false;
+        } else if (!cbAll.checked && !cbOthers.checked) {
+          cbStarlink.checked = true; // Impedisce di deselezionare tutto
+        }
+      });
+
+      cbOthers.addEventListener('change', () => {
+        if (cbOthers.checked) {
+          cbAll.checked = false;
+          cbStarlink.checked = false;
+        } else if (!cbAll.checked && !cbStarlink.checked) {
+          cbOthers.checked = true; // Impedisce di deselezionare tutto
+        }
       });
 
       fetchElements();
@@ -246,6 +310,7 @@
     }
 
     function drawSatPoints() {
+      const showAll = document.getElementById('filter-all').checked;
       const showStarlink = document.getElementById('filter-starlink').checked;
       const showOthers = document.getElementById('filter-others').checked;
 
@@ -253,7 +318,16 @@
       noFill();
       beginShape(POINTS);
       for (const p of satPoints) {
-        if ((p.isStarlink && showStarlink) || (!p.isStarlink && showOthers)) {
+        let visible = false;
+        if (showAll) {
+          visible = true;
+        } else if (showStarlink && p.isStarlink) {
+          visible = true;
+        } else if (showOthers && !p.isStarlink) {
+          visible = true;
+        }
+
+        if (visible) {
           stroke(p.r, p.g, p.b, 215);
           vertex(p.x, -p.z, p.y);
         }
