@@ -35,7 +35,8 @@
 
         // --- CONFIGURAZIONE MODULO 3D ---
         const modConfig = {
-            path: 'MATERIALE LUNA/Lunar_module.gltf', // Deve esserci il .bin nella stessa cartella
+            // Assicurati che il nome della cartella non abbia spazi o usa encodeURI se necessario
+            path: 'MATERIALE LUNA/Lunar_module.gltf', 
             scale: 0.8,
             rotationZ: 30,
             pos: { x: 100, y: 50, z: -300 } // y è l'altezza dal suolo
@@ -50,7 +51,8 @@
         function init() {
             // Scena e Camera
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 2000);
+            // MODIFICA: Aumentato l'ultimo parametro (far) da 2000 a 10000 per evitare il terreno nero a distanza
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 10000);
             camera.position.set(0, 150, 550);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -78,6 +80,7 @@
 
             // Caricamento Modello GLTF
             const gltfLoader = new GLTFLoader();
+            // Nota: Su mobile assicuratevi di usare HTTPS, altrimenti il caricatore potrebbe bloccarsi
             gltfLoader.load(modConfig.path, (gltf) => {
                 const model = gltf.scene;
                 model.scale.set(modConfig.scale, modConfig.scale, modConfig.scale);
