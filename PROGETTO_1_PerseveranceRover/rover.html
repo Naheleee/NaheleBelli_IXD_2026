@@ -71,7 +71,7 @@
         #toggle-panel {
             position: absolute;
             right: -35px;
-            top: 0px;
+            top: 64px;
             width: 35px;
             height: 65px;
             background: #ffffff;
@@ -94,6 +94,32 @@
             transition: background ease-out .2s;
         }
 
+        #toggle-panel-home {
+            position: absolute;
+            right: -35px;
+            top: -1px;
+            width: 35px;
+            height: 65px;
+            background: black;
+            color: white;
+            border: 1px solid #ddd;
+            border-left: none;
+            border-top: none;
+            cursor: pointer;
+            border-radius: 0 5px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: background ease-out .2s;
+            font-size: 14px;
+        }
+
+        #toggle-panel-home:hover {
+            background: white;
+            color: black;
+            transition: background ease-out .2s;
+        } 
         .panel-content {
             padding: 15px;
             overflow-y: auto;
@@ -350,33 +376,6 @@
             color: white;
         }
 
-        /* --- BACK TO LANDING BUTTON --- */
-        #back-to-landing {
-            position: fixed;
-            top: 0px;
-            right: -40px;
-            padding: 10px 20px;
-            transform: translateX(-50%);
-            z-index: 500;
-            background: black;
-            border: 1px solid black;
-            border-radius: 0 0 0 20px;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-transform: uppercase;
-        }
-
-        #back-to-landing:hover {
-            background: white;
-            color: black;
-            border: 1px solid black;
-            border-top: 0px;
-        }
 
         /* Black fade overlay */
         #fade-overlay {
@@ -674,8 +673,8 @@
                 <p>Because the Perseverance Rover was built and launched during the height of the COVID-19 pandemic, the
                     team wanted to honor the perseverance of healthcare workers worldwide.
                     <br>
-                    An aluminum plate on the Rover’s left side depicts the Rod of Asclepius—the ancient Greek symbol for
-                    healing and medicine—supporting the Earth. This serves as a lasting memorial to the challenges of
+                    An aluminum plate on the Rover’s left side depicts the Rod of Asclepius, the ancient Greek symbol for
+                    healing and medicine, supporting the Earth. This serves as a lasting memorial to the challenges of
                     2020 and a tribute to those who risked their lives to help others during the global crisis.</p>
                     <img src="img/healthcare.png" alt="Healthcare Tribute" style="width: 40%; margin-top: 15px; justify-content: center;">
                 </div>
@@ -716,13 +715,14 @@
                     code (representing 7-bit ASCII) that spelled out the phrase “Dare Mighty Things.” This motto is a
                     famous quote from President Theodore Roosevelt and has long been the unofficial mantra of NASA’s Jet
                     Propulsion Laboratory (JPL). Additionally, the outer ring of the parachute contained GPS
-                    coordinates—34°11'58" N 118°10'31" W—which point directly to the main entrance of the JPL
+                    coordinates: 34°11'58" N 118°10'31" W, which point directly to the main entrance of the JPL
                     headquarters in Pasadena, California.</p>
                     <img src="img/morse_code.png" alt="Hidden Morse Code" style="width: 90%; margin-top: 15px;">
             </div>
         </div>
     </div>
     <div id="side-panel" class="closed">
+        <button id="toggle-panel-home" onclick="window.location.href='index.html';">🏠︎</button>
         <button id="toggle-panel">🡢</button>
         <div class="panel-content">
             <h2 style="margin-top: 0">Components</h2>
@@ -734,8 +734,6 @@
     <div id="instructions">
         <p></p>
     </div>
-
-    <a id="back-to-landing" href="index.html">HOME</a>
 
     <div id="custom-arm-controls">
         <div class="arm-slider-group">
@@ -1004,7 +1002,7 @@ populateAccordions();
             { pos: {x: -0.31, y: 0.98, z: 1.22}, target: {x: -0.57, y: 0.97, z: 0.75} },  // curiosità (Geocache)
             { pos: {x: 0.00, y: 1.68, z: -0.87}, target: {x: 0.00, y: 1.58, z: -1.22} },  // curiosità (11 Million Names)
             { pos: {x: -0.46, y: 1.61, z: -0.62}, target: {x: -0.39, y: 1.12, z: -0.76} }, // curiosità (Calibration target)
-            { pos: {x: 0.00, y: -5.39, z: 0.72}, target: {x: 0.00, y: 1.00, z: 0.00} }   // curiosità (morse code)
+            { pos: {x:  0,   y: 7,   z:  1},    target: {x: 0, y: 1, z: 0}              }   // curiosità (morse code)
         ];
 
 
@@ -1456,7 +1454,7 @@ function resetAccordionUI() {
         // --- Caricamento Diretto del Modello ---
         function initModel() {
             const loader = new GLTFLoader();
-            loader.load('Perseverance_Rigged7.glb', (gltf) => {
+            loader.load('Perseverance_Rover_Rigged.glb', (gltf) => {
                 document.getElementById('instructions').style.display = 'none';
                 setupRover(gltf);
                 setupAccordion();
@@ -1864,7 +1862,7 @@ initModel();
 animate();
 
 // --- BACK BUTTON WITH FADE-OUT TRANSITION ---
-const backBtn = document.getElementById('back-to-landing');
+const backBtn = document.getElementById('toggle-panel-home');
 if (backBtn) {
     backBtn.addEventListener('click', (e) => {
         e.preventDefault();
