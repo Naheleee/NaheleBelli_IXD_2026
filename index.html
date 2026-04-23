@@ -9,8 +9,8 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
-            margin: 0 auto;
+            /* Rimosso max-width per permettere all'header di occupare tutta la larghezza */
+            margin: 0;
             padding: 20px;
             background-color: #f4f4f9;
         }
@@ -18,21 +18,35 @@
             border-bottom: 2px solid #000000;
             margin-bottom: 30px;
             padding-bottom: 10px;
+            /* L'header ora si adatta alla larghezza della pagina */
+            width: 100%;
         }
         h1 {
             color: #000000;
             margin: 0;
         }
-        .exercise-list {
+
+        /* Layout Main: due colonne affiancate */
+        main {
+            display: flex;
+            gap: 40px; /* Spazio tra le due colonne */
+            width: 100%;
+        }
+
+        /* Ogni sezione (esercizi e progetti) occupa metà spazio */
+        .column {
+            flex: 1;
+        }
+
+        .exercise-list, .project-list {
             list-style: none;
             padding: 0;
         }
 
-        /* Trasformiamo il link in un blocco cliccabile */
         .exercise-link {
-            display: block; /* Occupa tutto lo spazio disponibile */
-            text-decoration: none; /* Rimuove la sottolineatura dal testo */
-            color: inherit; /* Mantiene il colore del testo originale */
+            display: block;
+            text-decoration: none;
+            color: inherit;
             background: #fff;
             margin-bottom: 15px;
             padding: 20px;
@@ -42,9 +56,8 @@
             border: 1px solid transparent;
         }
 
-        /* Effetto al passaggio del mouse (hover) */
         .exercise-link:hover {
-            transform: translateY(-3px); /* Si alza leggermente */
+            transform: translateY(-3px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             border-color: #000000;
             background-color: #ffffff;
@@ -78,6 +91,14 @@
             color: #7f8c8d;
             text-align: center;
         }
+
+        /* Responsive: per schermi piccoli (mobile) */
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column; /* Le colonne diventano una sopra l'altra */
+                gap: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -88,41 +109,39 @@
 
     <main>
 
-        <h2>Esercizi:</h2>
+        <section class="column">
+            <h2>Esercizi:</h2>
+            <div class="exercise-list">
+                
+                <a href="Esercizi/es01_ISS/es01_ISS.html" class="exercise-link">
+                    <span class="exercise-title">Esercizio 1 - ISS Tracker</span>
+                    <span class="exercise-subtitle">Visualizza Esercizio →</span>
+                </a>
 
-        <div class="exercise-list">
+                <a href="Esercizi/es02_Celestrak_Satellites/index.html" class="exercise-link">
+                    <span class="exercise-title">Esercizio 2 - Celestrak Satellites</span>
+                    <span class="exercise-subtitle">Visualizza Esercizio →</span>
+                </a>
 
-            
-            
-            <a href="Esercizi/es01_ISS/es01_ISS.html" class="exercise-link">
-                <span class="exercise-title">Esercizio 1 - ISS Tracker</span>
-                <span class="exercise-subtitle">Visualizza Esercizio →</span>
-            </a>
+                <a href="Esercizi/es03_Moon/index.html" class="exercise-link">
+                    <span class="exercise-title">Esercizio 3 - Moon Terrain</span>
+                    <span class="exercise-subtitle">Visualizza Esercizio →</span>
+                </a>
 
-            <a href="Esercizi/es02_Celestrak_Satellites/index.html" class="exercise-link">
-                <span class="exercise-title">Esercizio 2 - Celestrak Satellites</span>
-                <span class="exercise-subtitle">Visualizza Esercizio →</span>
-            </a>
+            </div>
+        </section>
 
-            <a href="Esercizi/es03_Moon/index.html" class="exercise-link">
-                <span class="exercise-title">Esercizio 3 - Moon Terrain</span>
-                <span class="exercise-subtitle">Visualizza Esercizio →</span>
-            </a>
+        <section class="column">
+            <h2>Progetti:</h2>
+            <div class="project-list">
 
-        </div>
+                <a href="Progetto1_PerseveranceRover/index.html" class="exercise-link">
+                    <span class="project-title">Progetto 1 - Perseverance Rover</span>
+                    <span class="exercise-subtitle">Visualizza progetto →</span>
+                </a>
 
-        <h2>Progetti:</h2>
-
-        <div class="project-list">
-
-            
-            
-            <a href="Progetto1_PerseveranceRover/index.html" class="exercise-link">
-                <span class="project-title">Progetto 1 - Perseverance Rover</span>
-                <span class="exercise-subtitle">Visualizza progetto →</span>
-            </a>
-
-        </div>
+            </div>
+        </section>
 
     </main>
 
