@@ -1,23 +1,60 @@
-# NaheleBelli_IXD_2026
+SUPSI 2026  
+Corso d’interaction design, CV429.01  
+Docenti: A. Gysin, G. Profeta  
 
-## Esercizi:<br>
-https://naheleee.github.io/NaheleBelli_IXD_2026/index.html<br>
+Progetto 1: La conquista dello spazio
 
-## Progetto 1:
-### Intenzione di progetto:
-Vorrei realizzare una pagina web interattiva dedicata all’esplorazione e conoscenza del rover planetario "Perseverance". Utilizzando il modello 3D originale messo a disposizione dalla NASA, creerò un'interfaccia coinvolgente che permetta di scoprire ogni segreto del robot: dalla sua sofisticata meccanica ai singoli componenti interni e le curiosità più interessanti della missione. L'obiettivo è mostrare in modo dinamico come si muove (grazie ad un rig del modello) e come opera sul suolo marziano, offrendo un'esperienza digitale completa e divulgazione scientifica.
-### Tema:
+# Perseverance Rover
+Autore: Nahele Belli \
+[Perseverance Rover](https://naheleee.github.io/NaheleBelli_IXD_2026/Progetto1_PerseveranceRover/)
+
+
+## Introduzione e tema
 Rover marziano "Perseverance" (NASA)
-### Target:
-Giovani, adulti, appassionati, curiosi
-### Forma:
+
+
+## Riferimenti progettuali
+lorem ipsum
+
+
+
+## Design dell’interfaccia e modalità di interazione
 Pagina web ludica, semplice e non troppo tecnica
 
-## Progetto 2:
-### Intenzione di progetto:
-### Tema:
-NASA 70
-### Target:
-### Forma:
+https://github.com/user-attachments/assets/38d1768e-a90e-45dd-b12b-1ac0aa1151b3
+
+[<img src="README_img/cards.gif" width="500" alt="Magic trick">]()
 
 
+## Tecnologia usata
+lorem ipsum
+
+
+
+```JavaScript
+const image = new Image();
+image.onload = () => {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        internalFormat,
+        srcFormat,
+        srcType,
+        image
+    );
+    if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+        gl.generateMipmap(gl.TEXTURE_2D);
+    } else {
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    }
+};
+image.src = url;
+```
+
+## Target e contesto d’uso
+Giovani, adulti, appassionati, curiosi
+
+[<img src="README_img/munari.jpg" width="300" alt="Supplemento al dizionario italiano">]()
