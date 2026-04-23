@@ -4,9 +4,9 @@ Docenti: A. Gysin, G. Profeta
 
 Progetto 1: La conquista dello spazio
 
-# Perseverance Rover
+# NASA - Perseverance Rover
 Autore: Nahele Belli \
-[Perseverance Rover](https://naheleee.github.io/NaheleBelli_IXD_2026/Progetto1_PerseveranceRover/)
+[NASA - Perseverance Rover](https://naheleee.github.io/NaheleBelli_IXD_2026/Progetto1_PerseveranceRover/)
 
 
 ## Introduzione e tema
