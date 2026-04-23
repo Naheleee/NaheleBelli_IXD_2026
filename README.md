@@ -13,4 +13,11 @@ Giovani, adulti, appassionati, curiosi
 ### Forma:
 Pagina web ludica, semplice e non troppo tecnica
 
+## Progetto 2:
+### Intenzione di progetto:
+### Tema:
+NASA 70
+### Target:
+### Forma:
+
 
