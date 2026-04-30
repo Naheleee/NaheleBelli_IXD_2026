@@ -133,7 +133,7 @@
         .accordion-btn {
             width: 100%;
             text-align: left;
-            padding: 9px;
+            padding: 8px;
             background: #f8f8f8;
             border: none;
             cursor: pointer;
@@ -719,6 +719,13 @@
                     headquarters in Pasadena, California.</p>
                     <img src="img/morse_code.png" alt="Hidden Morse Code" style="width: 90%; margin-top: 15px;">
             </div>
+            <div id="curiosity-6" data-title="Ingenuity Helicopter">
+                <p>Strapped to the Rover’s belly for the journey to Mars was a technology demonstration, the Mars
+                        Helicopter, Ingenuity, which completed 72 historic flights. In a feat that’s been called a
+                        “Wright Brothers moment” Ingenuity became the first aircraft to achieve powered, controlled
+                        flight on another planet.</p>
+                    <img src="img/Helicopter-ingenuity2.png" alt="Ingenuity Helicopter" style="width: 95%; margin-top: 15px;">
+            </div>
         </div>
     </div>
     <div id="side-panel" class="closed">
@@ -727,7 +734,7 @@
         <div class="panel-content">
             <h2 style="margin-top: 0">Components</h2>
             <div id="components-container"></div>
-            <h2 style="margin-top: 25px;">Curiosities</h2>
+            <h2 style="margin-top: 20px;">Curiosities</h2>
             <div id="curiosities-container"></div>
         </div>
     </div>
@@ -866,7 +873,7 @@ function populateAccordions() {
     }
 
     const curioContainer = document.getElementById('curiosities-container');
-    for (let i = 0; i <= 5; i++) { // <--- Qui deve esserci 5 per avere 6 bottoni (0,1,2,3,4,5)
+    for (let i = 0; i <= 6; i++) { // <--- Qui deve esserci 6 per avere 7 bottoni (0,1,2,3,4,5,6)
         const curio = document.getElementById(`curiosity-${i}`);
         if (curio) createAccordionItem(curioContainer, curio.dataset.title, curio.innerHTML, i, 'curiosity');
     }
@@ -1002,7 +1009,8 @@ populateAccordions();
             { pos: {x: -0.31, y: 0.98, z: 1.22}, target: {x: -0.57, y: 0.97, z: 0.75} },  // curiosità (Geocache)
             { pos: {x: 0.00, y: 1.68, z: -0.87}, target: {x: 0.00, y: 1.58, z: -1.22} },  // curiosità (11 Million Names)
             { pos: {x: -0.46, y: 1.61, z: -0.62}, target: {x: -0.39, y: 1.12, z: -0.76} }, // curiosità (Calibration target)
-            { pos: {x:  0,   y: 7,   z:  1},    target: {x: 0, y: 1, z: 0}              }   // curiosità (morse code)
+            { pos: {x:  0,   y: 7,   z:  1},    target: {x: 0, y: 1, z: 0}              },   // curiosità (morse code)
+            { pos: {x:  0,   y: 7,   z:  1},    target: {x: 0, y: 1, z: 0}              }   // curiosità (ingenuity helicopter)
         ];
 
 
