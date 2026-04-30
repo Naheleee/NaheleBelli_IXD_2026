@@ -15,6 +15,7 @@ Il progetto consiste in un sitoweb interattivo dedicato all'esplorazione del Rov
 
 ## Riferimenti progettuali
 Lo sviluppo si è basato sull'analisi del sito originale della Nasa (nasa.gov/mission/mars-2020-perseverance).
+- Editor Three.js (three.js/editor)
 
 
 
